@@ -1,38 +1,19 @@
 version: '3.8'
 
 services:
-  postgresql:
-    image: postgres:12-alpine
-    restart: unless-stopped
-    environment:
-      POSTGRES_USER: ${SQL_USER}
-      POSTGRES_PASSWORD: ${SQL_PASS}
-      POSTGRES_DB: ${SQL_BASE}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${SQL_USER} -d ${SQL_BASE}"]
-      interval: 30s
-      timeout: 10s
-      retries: 3
-
   hmdm:
     image: headwindmdm/hmdm:0.1.5
     restart: unless-stopped
-    ports:
-      - "8080:8080"
-    depends_on:
-      postgresql:
-        condition: service_healthy
+    # No ports section - Coolify handles internal networking
     volumes:
       - hmdm_work:/usr/local/tomcat/work
       - hmdm_config:/usr/local/tomcat/conf/Catalina/localhost
-      - ./ssl:/etc/letsencrypt
     environment:
-      SQL_HOST: postgresql
-      SQL_USER: ${SQL_USER}
-      SQL_BASE: ${SQL_BASE}
-      SQL_PASS: ${SQL_PASS}
+      SQL_HOST: ${EXTERNAL_DB_HOST}
+      SQL_PORT: ${EXTERNAL_DB_PORT}
+      SQL_USER: ${EXTERNAL_DB_USER}
+      SQL_BASE: ${EXTERNAL_DB_NAME}
+      SQL_PASS: ${EXTERNAL_DB_PASSWORD}
       BASE_DOMAIN: ${BASE_DOMAIN}
       PROTOCOL: ${PROTOCOL}
       ADMIN_EMAIL: ${ADMIN_EMAIL}
@@ -45,6 +26,5 @@ services:
       HTTPS_LETSENCRYPT: "false"
 
 volumes:
-  postgres_data:
   hmdm_work:
   hmdm_config:
